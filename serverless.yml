@@ -1,0 +1,52 @@
+service: serverless-hello-world
+frameworkVersion: '2'
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  lambdaHashingVersion: 20201221
+  profile: alanmak95
+  environment: ${self:custom.settings}
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:*
+          Resource:
+            - arn:aws:dynamodb:${self:custom.settings.region}:074500630973:table/${self:custom.settings.tableName}
+
+custom:
+  settings:
+    tableName: greetNames
+    region: us-east-1
+
+functions:
+  hello:
+    handler: handler.hello
+    events:
+      - http:
+          path: hello
+          method: get
+  wasGreeted:
+    handler: handler.wasGreeted
+    events:
+      - http:
+          path: wasGreeted
+          method: get
+
+resources:
+  Resources:
+    NewResource:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.settings.tableName}
+        AttributeDefinitions:
+          - AttributeName: username
+            AttributeType: S
+        KeySchema:
+          - AttributeName: username
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
